@@ -16,7 +16,7 @@ Non - functional requirements:
     |_ 1:200, for every creation there a 200 lookups
     |_ Need to consider for explosion of requests (Say a celebrity shares an URL)
 3. Database reads and writes
-    |_ 1:200 will be write:read ratio
+    |_ 40:8000 will be write:read ratio
 3. The system should be highly available and fast (low latency for redirects)
 4. Expiration dates for URLs
     |_ Assume a URL which is created, will be available in DB for 100 years
