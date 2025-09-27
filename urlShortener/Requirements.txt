@@ -12,9 +12,11 @@ Non - functional requirements:
 1. The service should handle 100 million URLs shortened per month
     |_ 100, 000, 000 (per month) ~40 requests /s
     |_ 40 shortened URL creations /s
-2. Assume for every short URL created, there will be 200 requests /s for all 40 URLs
-    |_ 1:5, for every creation there a 5 requests /s
+2. Assume for every short URL created, there will be 8000 requests /s for all 40 new URLs created
+    |_ 1:200, for every creation there a 200 lookups
     |_ Need to consider for explosion of requests (Say a celebrity shares an URL)
+3. Database reads and writes
+    |_ 1:200 will be write:read ratio
 3. The system should be highly available and fast (low latency for redirects)
 4. Expiration dates for URLs
     |_ Assume a URL which is created, will be available in DB for 100 years
