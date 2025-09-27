@@ -1,0 +1,27 @@
+About:
+Design a URL shortener, where given an URL it must shorten the URL as small as possible.
+
+Functional Requirements:
+1. Users can submit a long URL and get a shortened URL back
+2. When someone clicks the shortened URL, they get redirected to the original URL
+3. Shortened URLs should be as short as possible
+4. Custom aliases (users can specify their own short code)
+
+
+Non - functional requirements:
+1. The service should handle 100 million URLs shortened per month
+    |_ 100, 000, 000 (per month) ~40 requests /s
+    |_ 40 shortened URL creations /s
+2. Assume for every short URL created, there will be 200 requests /s for all 40 URLs
+    |_ 1:5, for every creation there a 5 requests /s
+    |_ Need to consider for explosion of requests (Say a celebrity shares an URL)
+3. The system should be highly available and fast (low latency for redirects)
+4. Expiration dates for URLs
+    |_ Assume a URL which is created, will be available in DB for 100 years
+    |_ Assuming each record (shortened URL + Metadata) is ~1kB then;
+        |_ 100, 000, 000 * 12 * 100 = 120 Billion,
+        |_ 120B * 1kB = 120B Bytes / 10^12 = 120 TB
+    |_ A stale URL with no requests, can be moved to cold storage or can be deleted with prior notifications
+5. Rate limiting to prevent abuse
+    |_ URL based rate limiting at load balancers or APIGateway can be performed.
+Analytics: track how many times each shortened URL is clicked
