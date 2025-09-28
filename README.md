@@ -1,2 +1,2 @@
 # System-Designs
-Uploading system design solutions (Functional and non - functional) as I solve them, for future reference
+Uploading system design solutions (Functional, non - functional and diagram breakdown) as I solve them, for future reference
