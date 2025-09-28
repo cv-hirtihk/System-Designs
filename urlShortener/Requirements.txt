@@ -23,7 +23,61 @@ Non - functional requirements:
     |_ Assuming each record (shortened URL + Metadata) is ~1kB then;
         |_ 100, 000, 000 * 12 * 100 = 120 Billion,
         |_ 120B * 1kB = 120B Bytes / 10^12 = 120 TB
-    |_ A stale URL with no requests, can be moved to cold storage or can be deleted with prior notifications
+    |_ A stale URL with no requests, can be moved to cold storage or can be deleted with prior notifications in staged manner
 5. Rate limiting to prevent abuse
-    |_ URL based rate limiting at load balancers or APIGateway can be performed.
-Analytics: track how many times each shortened URL is clicked
+    |_ URL based rate limiting at load balancers can be performed.
+6. Track how many times each shortened URL is clicked
+    |_ Data can be pushed from app servers to analytics server using some python agent (every 1 min)
+
+Design breakdown:
+1. User payload:
+    POST;
+    {
+        "long_url": "https://veryLongURL.com/this/is/a/very/long/url",
+        "custom_name": "(optional)",
+        "expiration_date": "(optional)" {If URL is never being used, move to cold storage.}
+    }
+    -> "short_url"
+    GET;
+    {
+        "short_url": "https://shortURL.com/veryShort"
+    }
+    -> redirect 301 || Error response
+2. Short URL token generation:
+    Many algorithms can be used;
+        2.1. MD5, SHA 256
+        2.2. Base 64
+        2.3. Random key generation
+    For simplicity, I went with random key generation (7 chars).
+    These token will be generated in batches, not all at once. Cause, 62^7 = ~3.5 Trillion combinations
+    Generate 10M tokens first, on utilizing 1M tokens, generate the next 10M tokens.
+    User can set their custom URL, but it must be minimum of 8 characters. This is to avoid collision with existing generated keys
+3. Loadbalancing and Rate limiting:
+    For even distribution of load LB is used. URL based rate limit can be performed.
+    For a celebrity URL which can get about 200k reqs /s, they can be allowed based on subscription plan (Free / Premium)
+4. CDN
+    Frequently accessed data will be served directly from CDN (like the celebrity URLs)
+    TTL can be set of the cached data
+5. KeyGen
+    All the tokens generated for short urls are stored here with status "AVAILABLE", once when that is taken it will be marked "USED"
+    KeyGen DB will be functioning in Master - Slave architecture. Slave will take over when Master is down
+6. Main DataBase
+    Database is sharded to easily segregate the short_urls which are assigned to the users.
+    To select a shard {hash(short_url) % number of shards}, this formula will be used, ensuring even distribution of data.
+    Shards are also replicated and are in Master - Slave architecture
+    Metadata schema:
+        Username
+        Actual URL
+        Shortened URL
+        Time created
+        Expiration date
+        Incrementation on each URL click
+7. Cold storage
+    Any unused URL will be moved to cold storage, and will be deleted in staged manner
+8. Redis
+    This is used to retrieve frequently accessed short_url. Instead of accessing it from DB, this will be cached.
+    For every GET request, check if data is cached in redis, if HIT, return, else fetch from DB.
+    Never reach cache for a POST request
+    TTL can be set for the cached data
+9. Analytics
+    A python agent will be running in app servers, which will push JSON payload with all the data to analytics server
